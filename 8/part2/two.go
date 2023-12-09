@@ -43,7 +43,7 @@ func main() {
 		mapLines[Destination{name}] = Moves{Destination{left}, Destination{right}}
 	}
 
-	for lineDestinationName, _ := range mapLines {
+	for lineDestinationName := range mapLines {
 		if []rune(lineDestinationName.name)[2] == 'A' {
 			startingDestinations = append(startingDestinations, lineDestinationName)
 		}
