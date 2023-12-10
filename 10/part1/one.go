@@ -16,13 +16,10 @@ type Line struct {
 
 var lines = map[int]Line{}
 var startingLineIndexAndPos Position
-var routesFromStart = []Position{}
-var alreadyVisited = map[Position][]Position{}       // starting position -> position
-var reachedStartingPosition = map[Position]bool{}    // startingposition -> bool
-var startingPositionCounter = map[Position]int{}     // startingposition -> counter
-var startingPositionsMaxCounter = map[Position]int{} // startingposition -> max value counter
+var alreadyVisited = []Position{} // starting position -> position
+var currentPathCounter = 0
 
-var counter = 0
+var maxPathLength = 0
 
 func main() {
 	inputLines := common.ReadFile("./live")
@@ -39,24 +36,11 @@ func main() {
 		}
 	}
 
-	// for _, line := range lines {
-	// 	fmt.Printf("%s\n", string(line.values))
-	// }
-
-	listRoutesFromStart()
-	// for _, route := range routesFromStart {
-	// 	fmt.Printf("%d %d\n", route.lineIndex, route.charIndex)
-	// }
-
-	// for _, startingPos := range routesFromStart {
-	// 	startingPositionCounter[startingPos] = 0
-	// 	calculateNextStep(startingPos, startingPos.lineIndex, startingPos.charIndex)
-	// }
-
+	replaceStartingChar()
 	fmt.Println("Starting position:", startingLineIndexAndPos)
 	calculateNextStep(startingLineIndexAndPos, startingLineIndexAndPos.lineIndex, startingLineIndexAndPos.charIndex)
 
-	fmt.Println(counter / 2)
+	fmt.Println(maxPathLength / 2)
 }
 
 func calculateNextStep(startingPos Position, lineIndex int, charIndex int) {
@@ -71,7 +55,7 @@ func calculateNextStep(startingPos Position, lineIndex int, charIndex int) {
 	currentChar := lines[lineIndex].values[charIndex]
 
 	if currentPos != startingPos {
-		alreadyVisited[startingPos] = append(alreadyVisited[startingPos], Position{lineIndex, charIndex})
+		alreadyVisited = append(alreadyVisited, Position{lineIndex, charIndex})
 	}
 
 	canGoLeftFromCurrentChar := currentChar == '-' || currentChar == 'J' || currentChar == '7'
@@ -79,21 +63,20 @@ func calculateNextStep(startingPos Position, lineIndex int, charIndex int) {
 	canGoUpFromCurrentChar := currentChar == '|' || currentChar == 'L' || currentChar == 'J'
 	canGoDownFromCurrentChar := currentChar == '|' || currentChar == 'F' || currentChar == '7'
 
-	if startingPos == currentPos && startingPositionCounter[startingPos] > 0 {
-		fmt.Printf("Reached starting position: %d %d. Counter %d\n", lineIndex, charIndex, startingPositionCounter[startingPos])
-		if (startingPositionCounter[startingPos]) > counter {
-			counter = startingPositionCounter[startingPos]
+	if startingPos == currentPos && currentPathCounter > 0 {
+		fmt.Printf("Reached starting position: %d %d. Counter %d\n", lineIndex, charIndex, currentPathCounter)
+		if (currentPathCounter) > maxPathLength {
+			maxPathLength = currentPathCounter
 		}
-		reachedStartingPosition[startingPos] = true
 		return
 	}
 
-	startingPositionCounter[startingPos] = startingPositionCounter[startingPos] + 1
+	currentPathCounter += 1
 
 	leftChar := 'X'
 	if left.charIndex >= 0 {
 		wasVisited := false
-		for _, alreadyVisitedPos := range alreadyVisited[startingPos] {
+		for _, alreadyVisitedPos := range alreadyVisited {
 			if alreadyVisitedPos == left {
 				wasVisited = true
 			}
@@ -110,7 +93,7 @@ func calculateNextStep(startingPos Position, lineIndex int, charIndex int) {
 	rightChar := 'X'
 	if right.charIndex < len(lines[right.lineIndex].values) {
 		wasVisited := false
-		for _, alreadyVisitedPos := range alreadyVisited[startingPos] {
+		for _, alreadyVisitedPos := range alreadyVisited {
 			if alreadyVisitedPos == right {
 				fmt.Printf("Already visited right: %d %d\n", right.lineIndex, right.charIndex)
 				wasVisited = true
@@ -129,7 +112,7 @@ func calculateNextStep(startingPos Position, lineIndex int, charIndex int) {
 	upChar := 'X'
 	if up.lineIndex >= 0 {
 		wasVisited := false
-		for _, alreadyVisitedPos := range alreadyVisited[startingPos] {
+		for _, alreadyVisitedPos := range alreadyVisited {
 			if alreadyVisitedPos == up {
 				wasVisited = true
 			}
@@ -147,7 +130,7 @@ func calculateNextStep(startingPos Position, lineIndex int, charIndex int) {
 	downChar := 'X'
 	if down.lineIndex < len(lines) {
 		wasVisited := false
-		for _, alreadyVisitedPos := range alreadyVisited[startingPos] {
+		for _, alreadyVisitedPos := range alreadyVisited {
 			if alreadyVisitedPos == down {
 				wasVisited = true
 			}
@@ -162,15 +145,13 @@ func calculateNextStep(startingPos Position, lineIndex int, charIndex int) {
 		calculateNextStep(startingPos, down.lineIndex, down.charIndex)
 	}
 
-	startingPositionCounter[startingPos] = startingPositionCounter[startingPos] - 1
-	if startingPositionCounter[startingPos] > startingPositionsMaxCounter[startingPos] {
-		startingPositionsMaxCounter[startingPos] = startingPositionCounter[startingPos]
-	}
-
-	fmt.Printf("No route found for: %d %d Current counter %d\n", lineIndex, charIndex, startingPositionCounter[startingPos])
+	currentPathCounter = currentPathCounter - 1
+	fmt.Printf("No route found for: %d %d Current counter %d\n", lineIndex, charIndex, currentPathCounter)
 }
 
-func listRoutesFromStart() {
+func replaceStartingChar() {
+	var routesFromStart = []Position{}
+
 	left := Position{lineIndex: startingLineIndexAndPos.lineIndex, charIndex: startingLineIndexAndPos.charIndex - 1}
 	right := Position{lineIndex: startingLineIndexAndPos.lineIndex, charIndex: startingLineIndexAndPos.charIndex + 1}
 	up := Position{lineIndex: startingLineIndexAndPos.lineIndex - 1, charIndex: startingLineIndexAndPos.charIndex}
